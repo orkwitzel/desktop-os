@@ -2,6 +2,8 @@
 
 Rules here apply to **human contributors** and to **coding agents**. Humans own final judgment on product direction; agents follow repo conventions and ask when requirements conflict.
 
+This repository is the **desktop-os** upstream shell only. It has **no** Cloudflare/Wrangler deploy scripts. Hosting belongs in your fork (see [README](../README.md) § Extending).
+
 ## Project layout
 
 ```
@@ -184,7 +186,7 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 | FS DB, seed, routing | `fs/` | `fsDb.ts`, `extensionRouter.ts` |
 | App-only pure algorithms | `apps/<app>/*.logic.ts` | `minesweeper.logic.ts` |
 | Shared non-app UI | `components/shared/` | `MarkdownView` |
-| App registration + lazy load | `components/shell/registry.tsx` | `appDefinitions` |
+| App registration + lazy load | `components/shell/registry.base.ts` | `defineApp`, `baseAppDefinitions` |
 
 **Rules of thumb**
 
@@ -212,7 +214,7 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 
 1. **TypeScript everywhere** in `src/` — explicit props for exported components; avoid `any`.
 2. **Keep session transitions pure** — `sessionReducer` has no side effects; persistence/analytics stay outside unless redesigned.
-3. **Lazy-load apps** — `React.lazy` in `registry.tsx`; dynamic import paths use `@/apps/<app>/<Component>`.
+3. **Lazy-load apps** — `defineApp()` in `registry.base.ts` (wraps `React.lazy`); import paths use `@/apps/<app>/<Component>`.
 4. **Hooks & ESLint** — Respect `react-hooks` rules; fix ref/access issues by destructuring, not blanket disables.
 5. **Dumb views** — When touching a component, keep new behavior in `.logic.ts`, not in `.tsx`.
 
@@ -220,13 +222,9 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 
 1. Create `src/apps/<slug>/<Slug>Root/` with `SlugRoot.tsx`, `SlugRoot.logic.ts`, `SlugRoot.style.ts`, `index.ts`.
 2. `SlugRoot` must accept `AppProps` from `@/store/session/sessionTypes`.
-3. Append to `appDefinitions` in `components/shell/registry.tsx`:
+3. Register in `components/shell/registry.base.ts` with `defineApp(() => import('@/apps/my-app/MyRoot'), { id, defaultTitle, defaultBounds, icon })`.
 
-   ```ts
-   Root: lazy(() => import('@/apps/my-app/MyRoot')),
-   ```
-
-4. Add launcher stub at `/apps/<slug>.app` in `seedFs.ts`.
+4. Add launcher stub in `buildBaseSeedNodes()` inside `src/fs/seedFs.ts`.
 5. Optionally pin to wallpaper via `/desktop/<name>.desktop`.
 
 Use `useOs()` for OS actions (filesystem, windows, dialogs, clipboard, explorer integration). Subscribe to reactive state with `useFsStore((s) => …)` or `useWindowManager()` when you need `nodes`, `ready`, or `session` without pulling the full API. Prefer local state in `.logic.ts` for app internals.
