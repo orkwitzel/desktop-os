@@ -420,7 +420,7 @@ export type OsSettingsApi = {
 }
 
 /**
- * Unified portfolio OS API. Obtain via {@link useOs} in React components.
+ * Unified desktop OS API. Obtain via {@link useOs} in React components.
  *
  * @example
  * ```ts

@@ -1,6 +1,6 @@
 # Specs
 
-Plan-before-code workflow for `portfolio-os`. Inspired by Kiro/spec-driven
+Plan-before-code workflow for `desktop-os`. Inspired by Kiro/spec-driven
 development: every non-trivial change starts as three short docs
 (`requirements.md` → `design.md` → `tasks.md`) before any source code moves.
 
@@ -80,7 +80,7 @@ Until then, document manual verification in each task and lean on
 
 ## Monorepo note
 
-`portfolio-os` is a **single SPA**, not a monorepo. If that ever changes
+`desktop-os` is a **single SPA**, not a monorepo. If that ever changes
 (e.g. a future `packages/` or `apps/<service>/` split), update the
 templates and this README to scope tasks per package and to call out
 package-local commands (`npm -w <pkg> run …`).

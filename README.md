@@ -14,6 +14,7 @@ npm run dev
 ```bash
 npm run build   # production bundle
 npm run lint    # ESLint
+npm run preview # local preview of dist/
 ```
 
 ## Built-in apps
@@ -25,9 +26,11 @@ npm run lint    # ESLint
 
 Register more apps in [`src/components/shell/registry.base.ts`](src/components/shell/registry.base.ts).
 
-## Fork for your own site
+## Extending
 
-See **[docs/FORK.md](docs/FORK.md)**. The reference portfolio implementation is a fork at [github.com/orkwitzel/portfolio](https://github.com/orkwitzel/portfolio).
+Fork or copy this repo and add your own apps under `src/apps/` (or a separate `src/site/` tree in your fork). Wire them in `registry.base.ts` and `seedFs.ts`.
+
+This repo has **no hosting or deploy config** — add Vite `preview`, static hosting, or Workers in your own project.
 
 ## Documentation
 

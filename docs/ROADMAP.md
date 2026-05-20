@@ -23,7 +23,7 @@ Living document: update **Status** and **Notes** when you start or finish work s
 | **2** | Apps & content | **Done** | P2.1–P2.3 shipped 2026-05-17 — social links, demo apps, My Computer / IDB hub. |
 | **3** | Technical hardening | **Todo** | Clamp, persistence, tests, CI. |
 | **4** | Mobile & accessibility | **Todo** | Responsive shell, a11y pass. |
-| **5** | Deployment & polish | **Todo** | Hosting, SEO/meta. |
+| **5** | Deployment & polish | **Deferred** | Out of scope for this repo; add hosting in your fork. |
 
 ---
 
@@ -206,24 +206,7 @@ Living document: update **Status** and **Notes** when you start or finish work s
 
 ## Phase 5 — Deployment & polish
 
-### 5.1 Hosting
-
-**Outcome:** Static deploy documented and repeatable.
-
-| Step | Task | Status | Notes |
-|------|------|--------|--------|
-| P5.1-1 | Pick host (Pages, Cloudflare, Netlify, etc.) + document env/build command. | Todo | |
-| P5.1-2 | Verify asset paths / `base` for non-root deploy if needed. | Todo | |
-
-### 5.2 SEO / sharing
-
-**Outcome:** Sensible previews when links are dropped in chat/social.
-
-| Step | Task | Status | Notes |
-|------|------|--------|--------|
-| P5.2-1 | Title, description, canonical meta in `index.html` or head injection. | Todo | |
-| P5.2-2 | OG/Twitter card tags + share image asset. | Todo | |
-| P5.2-3 | Decide if `/` stays full-screen desktop only or gains minimal exterior landing. | Todo | |
+**Deferred for desktop-os.** This repository is a library-style shell only (`npm run dev` / `vite preview`). Hosting, domains, and SEO belong in downstream forks.
 
 ---
 

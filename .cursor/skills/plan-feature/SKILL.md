@@ -1,12 +1,12 @@
 ---
 name: plan-feature
-description: Run the portfolio-os spec-driven planning workflow (requirements -> design -> tasks) for the user's current request. Use when the user types /plan-feature, asks to "plan", "scope", "design", or "spec" a feature, or proposes a non-trivial change that should go through docs/specs/ before any code is edited.
+description: Run the desktop-os spec-driven planning workflow (requirements -> design -> tasks) for the user's current request. Use when the user types /plan-feature, asks to "plan", "scope", "design", or "spec" a feature, or proposes a non-trivial change that should go through docs/specs/ before any code is edited.
 disable-model-invocation: true
 ---
 
 # Plan a feature
 
-Drive the spec-driven planning workflow for `portfolio-os`. Do **not** edit
+Drive the spec-driven planning workflow for `desktop-os`. Do **not** edit
 files under `src/` while this skill is running.
 
 ## 0. Ground yourself

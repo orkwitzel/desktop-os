@@ -8,7 +8,7 @@ import {
   type SettingsV1,
 } from '@/theme/tokens'
 
-const STORAGE_KEY = 'portfolio-os-settings'
+const STORAGE_KEY = 'desktop-os-settings'
 
 function loadSettings(): SettingsV1 {
   try {

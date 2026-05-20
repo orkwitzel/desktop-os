@@ -11,19 +11,19 @@ function collectDescendantPaths(all: FsNode[], rootPath: string): string[] {
     .sort((a, b) => b.length - a.length)
 }
 
-const DB_NAME = 'portfolio-os-fs'
+const DB_NAME = 'desktop-os-fs'
 const DB_VERSION = 1
 
-type PortfolioFsDB = {
+type DesktopOsFsDB = {
   nodes: { key: string; value: FsNode }
   meta: { key: string; value: number }
 }
 
-let dbPromise: Promise<IDBPDatabase<PortfolioFsDB>> | null = null
+let dbPromise: Promise<IDBPDatabase<DesktopOsFsDB>> | null = null
 
-function getDb(): Promise<IDBPDatabase<PortfolioFsDB>> {
+function getDb(): Promise<IDBPDatabase<DesktopOsFsDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<PortfolioFsDB>(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<DesktopOsFsDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('nodes')) {
           db.createObjectStore('nodes')
@@ -37,7 +37,7 @@ function getDb(): Promise<IDBPDatabase<PortfolioFsDB>> {
   return dbPromise
 }
 
-async function ensureSeeded(db: IDBPDatabase<PortfolioFsDB>): Promise<void> {
+async function ensureSeeded(db: IDBPDatabase<DesktopOsFsDB>): Promise<void> {
   const stored = await db.get('meta', 'schemaVersion')
   if (stored === SEED_VERSION) return
 

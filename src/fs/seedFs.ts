@@ -5,7 +5,7 @@ import type { FsNode } from './types'
 import { appIcons } from '@/utils/appIcons'
 import { basename, join, parentPath } from '@/utils/paths'
 
-export const SEED_VERSION = 7
+export const SEED_VERSION = 8
 
 function dir(path: string, now: number): FsNode {
   return {

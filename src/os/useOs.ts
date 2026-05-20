@@ -8,7 +8,7 @@ import { createOsApi } from './createOsApi'
 import type { OsApi } from './types'
 
 /**
- * React hook returning the portfolio OS syscall API (`fs`, `win`, `ui`, `clipboard`, `explorer`, `settings`).
+ * React hook returning the desktop OS syscall API (`fs`, `win`, `ui`, `clipboard`, `explorer`, `settings`).
  *
  * Must run inside `WindowManagerProvider`, `ShellModalProvider`, and after `FsBootstrap`
  * has bound the shell. The returned object is memoized per render when dependencies are stable.

@@ -1,6 +1,6 @@
 # Keyboard shortcuts
 
-Shell-level chords for the portfolio-os desktop. Implementation lives in `src/components/shell/ShellKeyboard/` with pure helpers in `src/utils/shellKeyboard.ts`.
+Shell-level chords for the desktop-os shell. Implementation lives in `src/components/shell/ShellKeyboard/` with pure helpers in `src/utils/shellKeyboard.ts`.
 
 ## Shortcuts
 

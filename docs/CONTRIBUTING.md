@@ -16,8 +16,8 @@ src/
       StartMenu/
       ShellIcon/
       WindowManagerProvider/
-      registry.base.ts         # Base demo apps (upstream-safe)
-      registry.tsx             # Composes site + base app definitions
+      registry.base.ts         # App definitions + lazy imports
+      registry.tsx             # Re-exports registry.base
     wm/                        # Window chrome (frame + layer)
       WindowFrame/
       WindowLayer/
@@ -27,14 +27,6 @@ src/
   apps/                        # Built-in OS demo apps (lazy-loaded)
     <app-name>/
       <Component>/             # One folder per component (see below)
-
-  site/                        # Portfolio fork only — personal apps, content, seed
-    apps/                      # portfolio, about, resume
-    content/
-    config/
-    seed/
-    registry.site.ts
-    icons.ts
 
   store/                       # Global client state
     fsStore.ts                 # Zustand (filesystem + shell binding)
