@@ -1,8 +1,233 @@
-import { WindowManagerContext } from '@/store/session/windowManagerContext'
 import {
-  useWindowManagerProvider,
-  type WindowManagerProviderProps,
-} from './WindowManagerProvider.logic'
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react'
+import { createInitialSession, reduceSession } from '@/store/session/sessionReducer'
+import type {
+  NormalGeometry,
+  WindowGeometryState,
+  WindowId,
+  WindowLaunch,
+  WindowRecord,
+} from '@/store/session/sessionTypes'
+import type { WindowManagerApi } from '@/store/session/windowManagerContext'
+import { centerGeometry, readWorkspaceFrame } from '@/utils/workspaceFrame'
+import { WindowManagerContext } from '@/store/session/windowManagerContext'
+import type { WindowManagerProviderProps } from './WindowManagerProvider.logic'
+
+function useWindowManagerProvider({
+  registry,
+  workspaceRef,
+  children,
+}: WindowManagerProviderProps) {
+  const [session, dispatch] = useReducer(reduceSession, undefined, createInitialSession)
+  const sessionRef = useRef(session)
+  const loadingCountRef = useRef(0)
+  const [loadingCount, setLoadingCount] = useState(0)
+
+  useLayoutEffect(() => {
+    sessionRef.current = session
+  }, [session])
+
+  useEffect(() => {
+    document.body.classList.toggle('app-loading', loadingCount > 0)
+    return () => document.body.classList.remove('app-loading')
+  }, [loadingCount])
+
+  const beginAppLoad = useCallback(() => {
+    loadingCountRef.current += 1
+    setLoadingCount(loadingCountRef.current)
+  }, [])
+
+  const endAppLoad = useCallback(() => {
+    loadingCountRef.current = Math.max(0, loadingCountRef.current - 1)
+    setLoadingCount(loadingCountRef.current)
+  }, [])
+
+  const openApp = useCallback(
+    (
+      appId: string,
+      options?: {
+        title?: string
+        launch?: WindowLaunch
+        maximize?: boolean
+        center?: boolean
+      },
+    ) => {
+      const def = registry.get(appId)
+      if (!def) {
+        console.warn(`Unknown app id: ${appId}`)
+        return
+      }
+
+      beginAppLoad()
+
+      void (async () => {
+        try {
+          await def.loader()
+
+          const prev = sessionRef.current
+          const offset = (Object.keys(prev.windows).length % 10) * 26
+          const id = crypto.randomUUID()
+          const nextZ = prev.nextZ + 1
+          const { width, height } = def.defaultBounds
+          const restored: NormalGeometry =
+            options?.center
+              ? (centerGeometry(workspaceRef.current, width, height) ?? {
+                  x: 52 + offset,
+                  y: 44 + offset,
+                  width,
+                  height,
+                })
+              : {
+                  x: 52 + offset,
+                  y: 44 + offset,
+                  width,
+                  height,
+                }
+
+          let geometry: WindowGeometryState = { mode: 'normal', geometry: restored }
+          if (options?.maximize) {
+            const frame = readWorkspaceFrame(workspaceRef.current)
+            if (frame) {
+              geometry = { mode: 'maximized', restored, frame }
+            }
+          }
+
+          const window: WindowRecord = {
+            id,
+            appId,
+            title: options?.title ?? def.defaultTitle,
+            geometry,
+            zIndex: nextZ,
+            launch: options?.launch,
+          }
+
+          dispatch({ type: 'OPEN_WINDOW', window })
+        } catch (err) {
+          console.error(`Failed to load app "${appId}"`, err)
+        } finally {
+          endAppLoad()
+        }
+      })()
+    },
+    [registry, workspaceRef, beginAppLoad, endAppLoad],
+  )
+
+  const closeGuardsRef = useRef(new Map<WindowId, () => Promise<boolean>>())
+
+  const closeWindow = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'CLOSE_WINDOW', windowId })
+    closeGuardsRef.current.delete(windowId)
+  }, [])
+
+  const registerCloseGuard = useCallback(
+    (windowId: WindowId, handler: () => Promise<boolean>) => {
+      closeGuardsRef.current.set(windowId, handler)
+    },
+    [],
+  )
+
+  const unregisterCloseGuard = useCallback((windowId: WindowId) => {
+    closeGuardsRef.current.delete(windowId)
+  }, [])
+
+  const requestCloseWindow = useCallback(async (windowId: WindowId): Promise<boolean> => {
+    if (!(windowId in sessionRef.current.windows)) return false
+    const guard = closeGuardsRef.current.get(windowId)
+    if (guard) {
+      const allowed = await guard()
+      if (!allowed) return false
+    }
+    return true
+  }, [])
+
+  const setWindowTitle = useCallback((windowId: WindowId, title: string) => {
+    dispatch({ type: 'SET_WINDOW_TITLE', windowId, title })
+  }, [])
+
+  const focusWindow = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'FOCUS_WINDOW', windowId })
+  }, [])
+
+  const minimizeWindow = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'MINIMIZE_WINDOW', windowId })
+  }, [])
+
+  const restoreWindow = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'RESTORE_WINDOW', windowId })
+  }, [])
+
+  const toggleMinimize = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'TOGGLE_MINIMIZE', windowId })
+  }, [])
+
+  const moveWindow = useCallback((windowId: WindowId, x: number, y: number) => {
+    dispatch({ type: 'MOVE_WINDOW', windowId, x, y })
+  }, [])
+
+  const resizeWindow = useCallback((windowId: WindowId, width: number, height: number) => {
+    dispatch({ type: 'RESIZE_WINDOW', windowId, width, height })
+  }, [])
+
+  const maximizeWindow = useCallback((windowId: WindowId, frame: NormalGeometry) => {
+    dispatch({ type: 'MAXIMIZE_WINDOW', windowId, frame })
+  }, [])
+
+  const unmaximizeWindow = useCallback((windowId: WindowId) => {
+    dispatch({ type: 'UNMAXIMIZE_WINDOW', windowId })
+  }, [])
+
+  const value = useMemo(
+    (): WindowManagerApi => ({
+      session,
+      registry,
+      workspaceRef,
+      dispatch,
+      openApp,
+      closeWindow,
+      focusWindow,
+      minimizeWindow,
+      restoreWindow,
+      toggleMinimize,
+      moveWindow,
+      resizeWindow,
+      maximizeWindow,
+      unmaximizeWindow,
+      setWindowTitle,
+      registerCloseGuard,
+      unregisterCloseGuard,
+      requestCloseWindow,
+    }),
+    [
+      session,
+      registry,
+      workspaceRef,
+      openApp,
+      closeWindow,
+      focusWindow,
+      minimizeWindow,
+      restoreWindow,
+      toggleMinimize,
+      moveWindow,
+      resizeWindow,
+      maximizeWindow,
+      unmaximizeWindow,
+      setWindowTitle,
+      registerCloseGuard,
+      unregisterCloseGuard,
+      requestCloseWindow,
+    ],
+  )
+
+  return { value, children }
+}
+
 
 export function WindowManagerProvider(props: WindowManagerProviderProps) {
   const { value, children } = useWindowManagerProvider(props)

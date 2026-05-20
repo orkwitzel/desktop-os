@@ -1,5 +1,7 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useOs } from '@/hooks/useOs'
 import { useFsStore } from '@/store/fsStore'
+import { basename, extension } from '@/utils/paths'
 import { MarkdownView } from '@/components/shared/MarkdownView'
 import { openExternalLink } from '@/utils/openExternalLink'
 import type { AppFile, WwwFile } from '@/fs/types'
@@ -14,7 +16,6 @@ import {
 import {
   parseApp,
   parseWww,
-  useFsPreviewPane,
   type FsPreviewPaneProps,
 } from './FsPreviewPane.logic'
 
@@ -51,6 +52,63 @@ function AppPreview({ app, onOpen }: { app: AppFile; onOpen: () => void }) {
       <PreviewActionBar onOpen={onOpen} />
     </>
   )
+}
+
+function useFsPreviewPane({ selectedPath }: FsPreviewPaneProps) {
+  const os = useOs()
+  const ready = useFsStore((s) => s.ready)
+  const [content, setContent] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedPath || !ready) {
+      // Reset preview when selection clears or FS is not ready
+      void Promise.resolve().then(() => {
+        setContent(null)
+        setError(null)
+      })
+      return
+    }
+
+    let cancelled = false
+    os.fs
+      .read(selectedPath)
+      .then((text) => {
+        if (!cancelled) {
+          setContent(text)
+          setError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setContent(null)
+          setError('Could not read file.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [ready, os, selectedPath])
+
+  const ext = selectedPath ? extension(selectedPath) : ''
+
+  const openInNotepad = () => {
+    if (!selectedPath) return
+    os.win.openApp('notepad', {
+      title: basename(selectedPath),
+      launch: { path: selectedPath },
+    })
+  }
+
+  return {
+    selectedPath,
+    content,
+    error,
+    ext,
+    openPath: (path: string) => os.fs.open(path),
+    openInNotepad,
+  }
 }
 
 export default function FsPreviewPane(props: FsPreviewPaneProps) {

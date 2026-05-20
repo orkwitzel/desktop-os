@@ -1,9 +1,15 @@
 import { WindowFrame } from '@/components/wm/WindowFrame'
-import { useWindowLayer } from './WindowLayer.logic'
+import { useWindowManager } from '@/hooks/useWindowManager'
+import type { WindowRecord } from '@/store/session/sessionTypes'
 import { Layer } from './WindowLayer.style'
 
 export function WindowLayer() {
-  const { ordered } = useWindowLayer()
+  const { session } = useWindowManager()
+
+  const ordered: WindowRecord[] = session.order
+    .map((id) => session.windows[id])
+    .filter(Boolean)
+    .sort((a, b) => a.zIndex - b.zIndex)
 
   return (
     <Layer>

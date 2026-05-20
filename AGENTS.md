@@ -12,6 +12,15 @@ This file is for **automated coding agents** (and humans acting like them). Read
 - `docs/ROADMAP.md` — phased plan with step IDs and **Status** columns.
 - `docs/keyboard-shortcuts.md` — shell keyboard chords; update when changing `ShellKeyboard.tsx`.
 
+## Component conventions
+
+- **Hooks in `Component.tsx`** — `useState`, effects, and colocated `use<Component>` helpers live in the view file.
+- **Pure logic in `Component.logic.ts`** — reducers, types, constants, and pure functions only (no `use*` hooks).
+
+## Planning
+
+Use **Cursor Plan mode** for multi-step work. Follow `docs/CONTRIBUTING.md` for code conventions; no mandatory `docs/specs/` trilogy before editing `src/`.
+
 ## Architectural boundaries (do not break casually)
 
 1. **Session truth lives in the reducer** — `src/store/session/sessionReducer.ts` owns window transitions. UI calls verbs on `WindowManagerApi`; avoid duplicate geometry or z-order logic elsewhere.

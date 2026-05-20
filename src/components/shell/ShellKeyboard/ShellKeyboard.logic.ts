@@ -1,8 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
-import { useContextMenuOptional } from '@/components/shell/ContextMenu'
-import { useShellModalOptional } from '@/components/shell/ShellModal'
 import { getNextFocusWindowId, isEditableTarget } from '@/utils/shellKeyboard'
-import { useWindowManager } from '@/hooks/useWindowManager'
 import type { WindowManagerApi } from '@/store/session/windowManagerContext'
 
 export type DesktopKeyboardContext = {
@@ -22,7 +18,7 @@ export type ShellKeyboardProps = {
   desktopCtx?: DesktopKeyboardContext
 }
 
-type ShortcutContext = {
+export type ShortcutContext = {
   event: KeyboardEvent
   startMenuOpen: boolean
   clockWidgetOpen: boolean
@@ -51,7 +47,7 @@ function desktopFocused(ctx: ShortcutContext): boolean {
   return !ctx.wm.session.focusedWindowId
 }
 
-const shortcuts: Shortcut[] = [
+export const shellShortcuts: Shortcut[] = [
   {
     match: ({ event, startMenuOpen, clockWidgetOpen, contextMenuOpen, shellModalOpen }) =>
       !startMenuOpen &&
@@ -177,37 +173,3 @@ const shortcuts: Shortcut[] = [
     },
   },
 ]
-
-export function useShellKeyboard({ startMenuOpen, clockWidgetOpen, desktopCtx }: ShellKeyboardProps) {
-  const wm = useWindowManager()
-  const contextMenu = useContextMenuOptional()
-  const shellModal = useShellModalOptional()
-  const desktopCtxRef = useRef(desktopCtx)
-
-  useLayoutEffect(() => {
-    desktopCtxRef.current = desktopCtx
-  })
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const ctx: ShortcutContext = {
-        event,
-        startMenuOpen,
-        clockWidgetOpen,
-        contextMenuOpen: contextMenu?.isOpen() ?? false,
-        shellModalOpen: shellModal?.isOpen() ?? false,
-        wm,
-        desktopCtx: desktopCtxRef.current,
-      }
-      for (const shortcut of shortcuts) {
-        if (shortcut.match(ctx)) {
-          shortcut.run(ctx)
-          return
-        }
-      }
-    }
-
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [startMenuOpen, clockWidgetOpen, wm, contextMenu, shellModal])
-}

@@ -1,6 +1,6 @@
 import { useId, useRef } from 'react'
 import { ClockWidget, CLOCK_WIDGET_ID } from '@/components/shell/ClockWidget'
-import { useTrayClock } from './TrayClock.logic'
+import { formatTrayTime, useLiveClock } from '@/utils/liveClock'
 import { TrayButton, TrayTime } from './TrayClock.style'
 
 export type TrayClockProps = {
@@ -11,7 +11,8 @@ export type TrayClockProps = {
 export function TrayClock({ open, onOpenChange }: TrayClockProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
   const trayButtonId = useId()
-  const { now, formatted } = useTrayClock()
+  const now = useLiveClock('minute')
+  const formatted = formatTrayTime(now)
 
   return (
     <>

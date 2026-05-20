@@ -1,7 +1,9 @@
+import { useMemo, useState } from 'react'
+import type { FsNode } from '@/fs/types'
+import { normalizePath } from '@/utils/paths'
 import {
   childrenOf,
-  useFsTree,
-  useTreeExpansion,
+  ancestorDirs,
   type FsTreeProps,
 } from './FsTree.logic'
 import {
@@ -12,8 +14,35 @@ import {
   TreeScroll,
   TreeToggle,
 } from '@/apps/computer/computer.style'
-import type { FsNode } from '@/fs/types'
-import { normalizePath } from '@/utils/paths'
+
+function useFsTree({ nodes }: FsTreeProps) {
+  const rootKids = useMemo(() => childrenOf(nodes, '/'), [nodes])
+  return { rootKids, nodes }
+}
+
+function useTreeExpansion(currentDir: string) {
+  const required = useMemo(() => new Set(ancestorDirs(currentDir)), [currentDir])
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(['/', ...ancestorDirs(currentDir)]))
+
+  const visibleExpanded = useMemo(() => {
+    const next = new Set(expanded)
+    for (const dir of required) next.add(dir)
+    return next
+  }, [expanded, required])
+
+  const toggle = (path: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }
+
+  const isExpanded = (path: string) => visibleExpanded.has(path)
+
+  return { isExpanded, toggle }
+}
 
 function TreeNode({
   node,

@@ -76,8 +76,8 @@ Every React component gets its own directory:
 
 ```
 components/shell/Desktop/
-  Desktop.tsx           # Dumb view: JSX only
-  Desktop.logic.ts      # Behavior: hooks, reducers, handlers, effects
+  Desktop.tsx           # View + hooks: JSX, useState/useEffect, colocated useDesktop
+  Desktop.logic.ts      # Pure logic: reducers, types, constants, geometry helpers
   Desktop.style.ts      # styled-components primitives
   index.ts              # export { Desktop } from './Desktop'
 
@@ -98,25 +98,36 @@ Optional `index.ts` barrels: add when import ergonomics matter (`@/components/sh
 
 | File | Responsibility | Must not contain |
 |------|----------------|------------------|
-| `Component.tsx` | Markup, composition, wiring props from logic into styled elements | Reducers, `useEffect` for data, styled definitions, pure algorithms |
-| `Component.logic.ts` | `useComponent(...)` hook, local types, reducers, event handlers, effects | JSX (except rare type-only helpers), styled-components |
+| `Component.tsx` | JSX, React hooks (`useState`, `useEffect`, `useReducer`, `useCallback`, …), wiring callbacks into styled elements | Reducer implementations, pure algorithms, styled definitions |
+| `Component.logic.ts` | Pure functions, reducers, types, constants (`START_MENU_ID`) | JSX, styled-components, `use*` hooks |
 | `Component.style.ts` | `styled.*` exports, component-local visual tokens | Business logic, hooks, FS/session calls |
 
-### `Component.tsx` (dumb view)
+### `Component.tsx` (view + hooks)
 
 - Shell/wm components: **named** export matching the folder (`export function Desktop`).
 - App roots: **`export default function`** (`export default function NotepadRoot`); `index.ts` re-exports with `export { default } from './NotepadRoot'`.
-- Call `useX(props)` from `./Component.logic` once at the top.
+- Colocate hooks in the same file: inline in the component body for small cases, or a same-file `function useDesktop(props) { … }` above/below the component for larger ones.
 - Destructure hook return values directly—**do not** bundle refs into a single `vm` object if that triggers `react-hooks/refs` (pass `ref` from props or destructure `ref` separately from the hook).
 - Small presentational subcomponents (e.g. `DragGhosts`) may live in the same file if they are view-only.
 
 ```tsx
 // Desktop.tsx
-import { useDesktop, type DesktopProps } from './Desktop.logic'
+import {
+  desktopReducer,
+  toDesktopItems,
+  type DesktopProps,
+  type DesktopShortcut,
+} from './Desktop.logic'
 import { Workspace, Shortcuts } from './Desktop.style'
 
+function useDesktop(props: DesktopProps) {
+  const [state, dispatch] = useReducer(desktopReducer, …)
+  // effects, handlers…
+  return { state, handleWorkspacePointerDown, marqueeStyle, … }
+}
+
 export function Desktop(props: DesktopProps) {
-  const { state, handleWorkspacePointerDown, ... } = useDesktop(props)
+  const { state, handleWorkspacePointerDown, … } = useDesktop(props)
   const { workspaceRef } = props
 
   return (
@@ -127,35 +138,23 @@ export function Desktop(props: DesktopProps) {
 }
 ```
 
-### `Component.logic.ts` (behavior)
+### `Component.logic.ts` (pure logic)
 
-- Export a **`use<Component>`** hook as the primary API (e.g. `useDesktop`, `useWindowFrame`).
-- Export **`Props`** types used by the view (`DesktopProps`).
-- Export types the view needs for rendering (`DesktopShortcut`, `DragState`) when they are component-specific.
-- Keep **reducers and action unions** here when they are private to the component; keep **pure geometry/selection math** in `utils/`.
-- Side effects: `useOs`, `useFsStore` (state selectors), `fetch`, listeners, `document.addEventListener`.
-- Return a **plain object** of state + stable callbacks (`useCallback`); do not return JSX.
+- Export **types** used by the view (`DesktopProps`, `DesktopShortcut`, `DragState`).
+- Export **reducers and action unions** private to the component.
+- Keep **pure geometry/selection math** in `utils/` when shared; component-specific pure helpers stay here.
+- No React hooks, JSX, or styled-components.
 
 ```ts
 // Desktop.logic.ts
 export type DesktopProps = { workspaceRef: RefObject<HTMLDivElement | null>; … }
 
-export function useDesktop({ workspaceRef, onSelectionChange, … }: DesktopProps) {
-  const [state, dispatch] = useReducer(desktopReducer, …)
-  // effects, handlers…
-  return { state, handleWorkspacePointerDown, marqueeStyle, … }
+export function desktopReducer(state: DesktopState, action: DesktopAction): DesktopState {
+  // pure state transitions…
 }
 ```
 
-For components with almost no behavior, logic may be a thin hook or static data:
-
-```ts
-// AboutRoot.logic.ts
-export function useAboutRoot(props: AppProps) {
-  void props.windowId
-  return { source: aboutMd }
-}
-```
+For components with almost no pure logic, `*.logic.ts` may hold only types (e.g. menu definitions in `AppMenuBar.types.ts`).
 
 ### `Component.style.ts` (presentation)
 
@@ -177,14 +176,14 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 
 | Kind of logic | Location | Example |
 |---------------|----------|---------|
-| Component state, effects, handlers | `Component.logic.ts` | Marquee drag, Start menu open/close |
-| Pure functions (no React) | `utils/` | `snapPosition`, `selectFromMarquee`, `basename` |
+| Component state, effects, handlers | `Component.tsx` | Marquee drag, Start menu open/close |
+| Pure functions (no React) | `utils/` or `Component.logic.ts` | `snapPosition`, `desktopReducer`, `basename` |
 | Global Zustand store | `store/` | `fsStore.ts` |
 | Session (windows, focus, z-order) | `store/session/` + context | `sessionReducer`, `useWindowManager` |
 | OS API facade | `os/` | `useOs`, `createOsApi` |
 | Shared hook re-exports | `hooks/` | `useOs.ts`, `useWindowManager.ts` |
 | FS DB, seed, routing | `fs/` | `fsDb.ts`, `extensionRouter.ts` |
-| App-only pure algorithms | `apps/<app>/*.logic.ts` | `minesweeper.logic.ts` |
+| App-only pure algorithms | `apps/<app>/*.logic.ts` | `minesweeper.logic.ts`, `tetris.logic.ts` |
 | Shared non-app UI | `components/shared/` | `MarkdownView` |
 | App registration + lazy load | `components/shell/registry.base.ts` | `defineApp`, `baseAppDefinitions` |
 
@@ -216,7 +215,7 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 2. **Keep session transitions pure** — `sessionReducer` has no side effects; persistence/analytics stay outside unless redesigned.
 3. **Lazy-load apps** — `defineApp()` in `registry.base.ts` (wraps `React.lazy`); import paths use `@/apps/<app>/<Component>`.
 4. **Hooks & ESLint** — Respect `react-hooks` rules; fix ref/access issues by destructuring, not blanket disables.
-5. **Dumb views** — When touching a component, keep new behavior in `.logic.ts`, not in `.tsx`.
+5. **Hooks in `.tsx`** — When touching a component, keep new `use*` logic in `Component.tsx`, not in `.logic.ts`.
 
 ### Adding an application
 
@@ -227,7 +226,7 @@ export const TitleBar = styled.div<{ $active: boolean }>`
 4. Add launcher stub in `buildBaseSeedNodes()` inside `src/fs/seedFs.ts`.
 5. Optionally pin to wallpaper via `/desktop/<name>.desktop`.
 
-Use `useOs()` for OS actions (filesystem, windows, dialogs, clipboard, explorer integration). Subscribe to reactive state with `useFsStore((s) => …)` or `useWindowManager()` when you need `nodes`, `ready`, or `session` without pulling the full API. Prefer local state in `.logic.ts` for app internals.
+Use `useOs()` for OS actions (filesystem, windows, dialogs, clipboard, explorer integration). Subscribe to reactive state with `useFsStore((s) => …)` or `useWindowManager()` when you need `nodes`, `ready`, or `session` without pulling the full API. Prefer local state in `Component.tsx` for app internals.
 
 ```ts
 const os = useOs()
@@ -307,5 +306,7 @@ When assigning agent work, point to:
 - Files and folders listed above,
 - Acceptance criteria (“opening three Notepad instances still cascades”, etc.),
 - Whether UX decisions may evolve ([ROADMAP.md](./ROADMAP.md)) vs must match mock/spec exactly.
+
+For multi-step features, use **Cursor Plan mode** (interactive plan in chat; optional notes under `.cursor/plans/`). Product direction lives in [ROADMAP.md](./ROADMAP.md); archived specs under `docs/specs/2026-05-19-*` are historical only.
 
 Agents: defer purely subjective branding choices (palette, pixel asset packs) to humans unless given freedom to proceed.
