@@ -20,6 +20,8 @@ import {
   snapPosition,
   clampToWorkspace,
   getWorkspaceBounds,
+  iconPixelBounds,
+  rectsIntersect,
   resolveDropCollisions,
   gridToPx,
   type PixelRect,
@@ -422,6 +424,21 @@ function useDesktop({
     [workspaceRef, detachListeners],
   )
 
+  // ─── Clear selection when clicking outside the desktop workspace ───────────
+
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      if (stateRef.current.selection.selectedIds.size === 0) return
+      const workspace = workspaceRef.current
+      if (!workspace) return
+      const target = e.target as Node | null
+      if (target && workspace.contains(target)) return
+      dispatch({ type: 'CLEAR_SELECTION' })
+    }
+    window.addEventListener('pointerdown', onPointerDown, true)
+    return () => window.removeEventListener('pointerdown', onPointerDown, true)
+  }, [workspaceRef])
+
   // ─── Keyboard (Ctrl+A) — handled locally; Enter/Escape wired via parent ─────
 
   useEffect(() => {
@@ -470,15 +487,33 @@ function useDesktop({
   // ─── Compute marquee overlay rect ────────────────────────────────────────────
   // Uses the cached workspaceOrigin from MarqueeState — avoids reading workspaceRef during render.
 
-  const marqueeStyle = state.marquee
+  const marqueeRect: PixelRect | null = state.marquee
     ? (() => {
         const { startClient: sc, currentClient: cc, workspaceOrigin: wo } = state.marquee
-        const left = Math.min(sc.x, cc.x) - wo.left
-        const top = Math.min(sc.y, cc.y) - wo.top
-        const right = Math.max(sc.x, cc.x) - wo.left
-        const bottom = Math.max(sc.y, cc.y) - wo.top
-        return { left, top, width: right - left, height: bottom - top }
+        return {
+          left: Math.min(sc.x, cc.x) - wo.left,
+          top: Math.min(sc.y, cc.y) - wo.top,
+          right: Math.max(sc.x, cc.x) - wo.left,
+          bottom: Math.max(sc.y, cc.y) - wo.top,
+        }
       })()
+    : null
+
+  const marqueeStyle = marqueeRect
+    ? {
+        left: marqueeRect.left,
+        top: marqueeRect.top,
+        width: marqueeRect.right - marqueeRect.left,
+        height: marqueeRect.bottom - marqueeRect.top,
+      }
+    : null
+
+  const marqueeHoverIds = marqueeRect
+    ? new Set(
+        state.items
+          .filter((item) => rectsIntersect(marqueeRect, iconPixelBounds(item.gridX, item.gridY)))
+          .map((item) => item.id),
+      )
     : null
 
   return {
@@ -492,6 +527,7 @@ function useDesktop({
     commitRename,
     cancelRename,
     marqueeStyle,
+    marqueeHoverIds,
   }
 }
 
@@ -526,6 +562,7 @@ function DragGhosts({
 function DesktopShortcutView({
   item,
   selected,
+  marqueeHover,
   dragging,
   renaming,
   onPointerDown,
@@ -536,6 +573,7 @@ function DesktopShortcutView({
 }: {
   item: DesktopShortcut
   selected: boolean
+  marqueeHover: boolean
   dragging: boolean
   renaming: boolean
   onPointerDown: (e: React.PointerEvent, id: string) => void
@@ -559,6 +597,7 @@ function DesktopShortcutView({
       type="button"
       data-desktop-id={item.id}
       $selected={selected}
+      $marqueeHover={marqueeHover}
       $dragging={dragging}
       style={{ left, top, zIndex: dragging ? 10 : undefined }}
       aria-selected={selected}
@@ -600,12 +639,14 @@ export function Desktop(props: DesktopProps) {
       onPointerDown={vm.handleWorkspacePointerDown}
       onContextMenu={vm.handleWorkspaceContextMenu}
     >
+      {vm.marqueeStyle && <MarqueeRect style={vm.marqueeStyle} />}
       <Shortcuts>
         {vm.state.items.map((item) => (
           <DesktopShortcutView
             key={item.id}
             item={item}
             selected={vm.state.selection.selectedIds.has(item.id)}
+            marqueeHover={vm.marqueeHoverIds?.has(item.id) ?? false}
             dragging={
               vm.state.drag?.active === true &&
               vm.state.selection.selectedIds.has(item.id)
@@ -622,7 +663,6 @@ export function Desktop(props: DesktopProps) {
           <DragGhosts drag={vm.state.drag} items={vm.state.items} />
         )}
       </Shortcuts>
-      {vm.marqueeStyle && <MarqueeRect style={vm.marqueeStyle} />}
       <WindowLayer />
     </Workspace>
   )

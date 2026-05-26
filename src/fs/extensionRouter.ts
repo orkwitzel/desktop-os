@@ -52,7 +52,7 @@ export async function openPath(path: string, ctx: OpenPathContext): Promise<void
       break
     }
     case '.md':
-      ctx.wm.openApp('computer', { launch: { path } })
+      ctx.wm.openApp('markdownview', { title: basename(path), launch: { path } })
       break
     default:
       console.warn(`Unsupported file type: ${path}`)

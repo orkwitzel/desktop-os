@@ -10,4 +10,5 @@ export const appIcons = {
   playful: { kind: 'nerd', glyph: nerd.terminal },
   tetris: { kind: 'nerd', glyph: nerd.trophy },
   settings: { kind: 'nerd', glyph: nerd.gear },
+  markdownview: { kind: 'nerd', glyph: nerd.document },
 } as const satisfies Record<string, IconSource>

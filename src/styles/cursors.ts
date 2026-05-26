@@ -5,7 +5,6 @@
 import { css } from 'styled-components'
 import arrow from '@/content/cursors/winxp/arrow.png'
 import pointer from '@/content/cursors/winxp/pointer.png'
-import text from '@/content/cursors/winxp/text.png'
 import move from '@/content/cursors/winxp/move.png'
 import ewResize from '@/content/cursors/winxp/ew-resize.png'
 import nsResize from '@/content/cursors/winxp/ns-resize.png'
@@ -17,7 +16,7 @@ import wait from '@/content/cursors/winxp/wait.png'
 const winxp = {
   default: `url("${arrow}") 1 1, default`,
   pointer: `url("${pointer}") 9 1, pointer`,
-  text: `url("${text}") 5 11, text`,
+  text: 'text',
   move: `url("${move}") 11 11, move`,
   ewResize: `url("${ewResize}") 12 7, ew-resize`,
   nsResize: `url("${nsResize}") 6 11, ns-resize`,

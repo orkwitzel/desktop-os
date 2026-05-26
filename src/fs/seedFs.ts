@@ -5,7 +5,7 @@ import type { FsNode } from './types'
 import { appIcons } from '@/utils/appIcons'
 import { basename, join, parentPath } from '@/utils/paths'
 
-export const SEED_VERSION = 8
+export const SEED_VERSION = 9
 
 function dir(path: string, now: number): FsNode {
   return {
@@ -42,7 +42,7 @@ export function buildBaseSeedNodes(now: number): FsNode[] {
     nodes.push(dir(d, now))
   }
 
-  nodes.push(file('/README.md', readme, now))
+  nodes.push(file('/desktop/README.md', readme, now))
   nodes.push(file('/docs/keyboard-shortcuts.md', keyboardShortcuts, now))
   nodes.push(file('/docs/notes.txt', notes, now))
 

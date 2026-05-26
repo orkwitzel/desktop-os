@@ -18,12 +18,13 @@ export const Shortcuts = styled.div`
   inset: 12px;
 `
 
-export const Shortcut = styled.button<{ $selected: boolean; $dragging: boolean }>`
+export const Shortcut = styled.button<{ $selected: boolean; $marqueeHover: boolean; $dragging: boolean }>`
   position: absolute;
   width: 92px;
   border: none;
   padding: 4px 6px;
-  background: ${(p) => (p.$selected ? 'var(--selection-bg)' : 'transparent')};
+  background: ${(p) =>
+    p.$selected || p.$marqueeHover ? 'var(--selection-bg)' : 'transparent'};
   ${cursorPointer}
   display: flex;
   flex-direction: column;
@@ -39,8 +40,17 @@ export const Shortcut = styled.button<{ $selected: boolean; $dragging: boolean }
   -webkit-user-drag: none;
   opacity: ${(p) => (p.$dragging ? 0.3 : 1)};
   outline: ${(p) =>
-    p.$selected ? '1px dotted var(--selection-text)' : 'none'};
-  outline-offset: ${(p) => (p.$selected ? '1px' : '0')};
+    p.$selected || p.$marqueeHover ? '1px dotted var(--selection-text)' : 'none'};
+  outline-offset: ${(p) => (p.$selected || p.$marqueeHover ? '1px' : '0')};
+
+  &:hover {
+    background: ${(p) =>
+      p.$selected || p.$marqueeHover
+        ? 'var(--selection-bg)'
+        : 'color-mix(in srgb, var(--selection-bg) 50%, transparent)'};
+    outline: 1px dotted var(--selection-text);
+    outline-offset: 1px;
+  }
 
   &:focus-visible {
     outline: 2px dotted var(--selection-text);
@@ -90,5 +100,5 @@ export const MarqueeRect = styled.div`
   border: 1px dotted var(--selection-text);
   background: var(--selection-bg);
   pointer-events: none;
-  z-index: 30;
+  z-index: 0;
 `

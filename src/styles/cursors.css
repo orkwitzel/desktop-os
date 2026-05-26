@@ -47,21 +47,12 @@ html[data-cursor-mode='system'] [role='tab'] {
   cursor: pointer;
 }
 
-html:not([data-cursor-mode='system'])
-  input:not([type='button']):not([type='submit']):not([type='reset']):not(
+/* The bundled winxp text.png is effectively blank; fall back to the native I-beam in both modes. */
+input:not([type='button']):not([type='submit']):not([type='reset']):not(
     [type='checkbox']
   ):not([type='radio']):not([type='range']):not([type='file']),
-html:not([data-cursor-mode='system']) textarea,
-html:not([data-cursor-mode='system']) [contenteditable='true'] {
-  cursor: url('../content/cursors/winxp/text.png') 5 11, text;
-}
-
-html[data-cursor-mode='system']
-  input:not([type='button']):not([type='submit']):not([type='reset']):not(
-    [type='checkbox']
-  ):not([type='radio']):not([type='range']):not([type='file']),
-html[data-cursor-mode='system'] textarea,
-html[data-cursor-mode='system'] [contenteditable='true'] {
+textarea,
+[contenteditable='true'] {
   cursor: text;
 }
 

@@ -49,6 +49,12 @@ export const baseAppDefinitions: AppDefinition[] = [
     defaultBounds: { width: 480, height: 420 },
     icon: appIcons.settings,
   }),
+  defineApp(() => import('@/apps/markdownview/MarkdownViewRoot'), {
+    id: 'markdownview',
+    defaultTitle: 'MarkdownView',
+    defaultBounds: { width: 640, height: 560 },
+    icon: appIcons.markdownview,
+  }),
 ]
 
 export const appDefinitions = baseAppDefinitions

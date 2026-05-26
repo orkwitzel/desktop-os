@@ -68,7 +68,7 @@ export const FONT_SIZE_PX: Record<FontSizeId, number> = {
 export const DEFAULT_SETTINGS: SettingsV1 = {
   version: 1,
   colorScheme: 'classic',
-  cursorMode: 'winxp',
+  cursorMode: 'system',
   wallpaper: { kind: 'color', value: '#018281' },
   fontSize: 'medium',
 }

@@ -1,4 +1,5 @@
 import { Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { ShellIcon, placeholderIcon } from '@/components/shell/ShellIcon'
 import type { NormalGeometry, WindowRecord } from '@/store/session/sessionTypes'
 import { useWindowManager, type WindowManagerApi } from '@/hooks/useWindowManager'
 import {
@@ -27,7 +28,6 @@ import {
   ResizeGrip,
   ResizeSouth,
   TitleBar,
-  TitleIcon,
   TitleText,
   Window,
 } from './WindowFrame.style'
@@ -310,6 +310,7 @@ function useWindowFrame(win: WindowRecord) {
 export function WindowFrame({ window: win }: { window: WindowRecord }) {
   const vm = useWindowFrame(win)
   const Root = vm.Root
+  const appIcon = vm.wm.registry.get(win.appId)?.icon ?? placeholderIcon
 
   return (
     <Window
@@ -336,7 +337,7 @@ export function WindowFrame({ window: win }: { window: WindowRecord }) {
         onPointerDown={vm.onTitlePointerDown}
         onDoubleClick={vm.onTitleDoubleClick}
       >
-        <TitleIcon aria-hidden />
+        <ShellIcon source={appIcon} size="menu" />
         <TitleText>{win.title}</TitleText>
         <Controls>
           <ControlBtn
